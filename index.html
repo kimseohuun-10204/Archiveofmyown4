@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>URL 번역기 (기능 분리형)</title>
+  <title>통합 웹 번역 & 독서록 / 단어장</title>
   <style>
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --success: #059669;
-      --success-hover: #047857;
+      --secondary: #475569;
+      --accent: #059669;
       --bg: #f8fafc;
       --card: #ffffff;
       --border: #e2e8f0;
@@ -17,222 +17,319 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 16px; line-height: 1.5; }
-    .container { max-width: 900px; margin: 0 auto; }
-    
-    header { text-align: center; margin-bottom: 24px; }
-    header h1 { font-size: 1.8rem; margin-bottom: 6px; }
-    header p { color: #64748b; font-size: 0.95rem; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+    .container { max-width: 1000px; margin: 0 auto; }
 
-    .card { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
-    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #1e293b; }
+    header { text-align: center; margin-bottom: 20px; }
+    header h1 { font-size: 1.8rem; color: #1e293b; }
 
-    /* 입력폼 스타일 */
+    /* 탭 메뉴 */
+    .tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 18px; border: none; background: none; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: var(--primary); border-color: var(--primary); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* 공통 카드 및 폼 스타일 */
+    .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #1e293b; }
+
     .input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    input[type="url"] { flex: 1; min-width: 260px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; }
-    input[type="url"]:focus { border-color: var(--primary); }
-    
-    .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; color: white; }
-    .btn-blue { background-color: var(--primary); }
-    .btn-blue:hover { background-color: var(--primary-hover); }
-    .btn-green { background-color: var(--success); }
-    .btn-green:hover { background-color: var(--success-hover); }
+    input[type="text"], input[type="url"], textarea, select { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; }
+    textarea { width: 100%; height: 100px; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--primary); }
 
-    /* 바로가기 버튼 grid */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-    .shortcut-btn { padding: 10px 14px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; text-align: left; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #334155; transition: all 0.2s; }
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; color: white; background-color: var(--primary); transition: background 0.2s; }
+    .btn:hover { background-color: var(--primary-hover); }
+    .btn-accent { background-color: var(--accent); }
+    .btn-accent:hover { background-color: #047857; }
+    .btn-danger { background-color: #dc2626; }
+
+    /* 바로가기 그리드 */
+    .shortcut-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+    .shortcut-btn { padding: 10px 14px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; text-align: left; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #334155; }
     .shortcut-btn:hover { background: #e2e8f0; color: var(--primary); }
 
-    /* 상태창 및 결과창 */
-    .status { padding: 12px; border-radius: 8px; font-size: 0.9rem; display: none; margin-top: 12px; }
-    .status.info { background-color: #e0f2fe; color: #0369a1; display: block; }
-    .status.error { background-color: #fee2e2; color: #b91c1c; display: block; }
-
+    /* 결과 및 리스트 스타일 */
     .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
     @media (min-width: 768px) { .result-grid { grid-template-columns: 1fr 1fr; } }
-    
-    .result-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px; max-height: 500px; overflow-y: auto; font-size: 0.95rem; }
-    .result-box h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-    .result-box p { margin-bottom: 10px; word-break: break-word; }
+    .result-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 14px; max-height: 400px; overflow-y: auto; font-size: 0.9rem; }
+
+    .list-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .list-item-content { flex: 1; }
+    .status { padding: 10px; border-radius: 6px; font-size: 0.85rem; display: none; margin-top: 10px; background-color: #e0f2fe; color: #0369a1; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>🌐 웹 번역 및 이동 도구 (기능 분리)</h1>
-    <p>본문 텍스트 번역 기능과 사이트 직접 이동 기능을 따로 제공합니다.</p>
+    <h1>🌐 통합 번역 & 학습 관리 도구</h1>
   </header>
 
-  <!-- 기능 1: URL 본문 텍스트 추출 및 즉시 번역 -->
-  <section class="card">
-    <div class="card-title">📄 [기능 1] URL 본문 텍스트 추출 및 번역</div>
-    <div class="input-row">
-      <input type="url" id="textUrlInput" placeholder="https://... 번역할 URL 입력" />
-      <button class="btn btn-blue" onclick="runTextTranslation()">본문 번역하기</button>
-    </div>
+  <!-- 탭 메뉴 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('urlTab')">🔗 URL 번역 & 바로가기</button>
+    <button class="tab-btn" onclick="switchTab('textTab')">🔤 단어 / 문장 번역</button>
+    <button class="tab-btn" onclick="switchTab('wordbookTab')">📓 단어장</button>
+    <button class="tab-btn" onclick="switchTab('bookTab')">📚 독서록</button>
+  </div>
 
-    <!-- 기능 1 전용 추천 사이트 바로가기 (클릭 시 입력창에 들어가고 아래에 번역 출력) -->
-    <div style="margin-top: 10px;">
-      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">추천 번역 대상: </span>
-      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://en.wikipedia.org/wiki/Artificial_intelligence')">위키피디아(AI)</button>
-      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://raw.githubusercontent.com/facebook/react/main/README.md')">GitHub React</button>
-      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://news.ycombinator.com/')">Hacker News</button>
-    </div>
-
-    <div id="statusBox" class="status"></div>
-
-    <div class="result-grid" id="resultGrid" style="display: none;">
-      <div class="result-box">
-        <h3>원문 (Original)</h3>
-        <div id="originalContainer"></div>
+  <!-- 1. URL 번역 & 바로가기 탭 -->
+  <div id="urlTab" class="tab-content active">
+    <!-- 1-1. 본문 텍스트 추출 번역 -->
+    <div class="card">
+      <div class="card-title">📄 URL 본문 텍스트 추출 번역</div>
+      <div class="input-row">
+        <input type="url" id="textUrlInput" placeholder="https://... 번역할 URL 입력" />
+        <button class="btn" onclick="runTextTranslation()">본문 번역하기</button>
       </div>
-      <div class="result-box">
-        <h3>번역문 (Korean)</h3>
-        <div id="translatedContainer"></div>
+      <div id="statusBox" class="status"></div>
+      <div class="result-grid" id="resultGrid" style="display:none;">
+        <div class="result-box"><strong>원문</strong><hr style="margin:8px 0;"><div id="origContainer"></div></div>
+        <div class="result-box"><strong>번역문</strong><hr style="margin:8px 0;"><div id="transContainer"></div></div>
       </div>
     </div>
-  </section>
 
-  <!-- 기능 2: 번역된 상태로 웹사이트 직접 이동 -->
-  <section class="card">
-    <div class="card-title">🚀 [기능 2] 번역된 웹사이트로 직접 이동 (웹서핑)</div>
-    <div class="input-row">
-      <input type="url" id="directUrlInput" placeholder="https://... 이동할 웹사이트 URL 입력" />
-      <button class="btn btn-green" onclick="redirectTranslatedSite()">사이트로 이동 ➔</button>
-    </div>
-
-    <div style="margin-top: 16px;">
-      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 8px;">⚡ 클릭 시 번역된 상태로 즉시 이동하는 추천 사이트:</div>
-      <div class="grid">
-        <button class="shortcut-btn" onclick="openSite('https://en.wikipedia.org')">📖 위키피디아 영문판</button>
-        <button class="shortcut-btn" onclick="openSite('https://www.bbc.com/news')">📰 BBC News</button>
-        <button class="shortcut-btn" onclick="openSite('https://techcrunch.com')">💻 TechCrunch</button>
-        <button class="shortcut-btn" onclick="openSite('https://dev.to')">✍️ Dev.to 개발 블로그</button>
+    <!-- 1-2. 번역 사이트 직접 이동 (바로가기 추가) -->
+    <div class="card">
+      <div class="card-title">🚀 번역 상태로 사이트 직접 이동 (웹서핑)</div>
+      <div class="input-row">
+        <input type="url" id="directUrlInput" placeholder="https://... 이동할 URL 입력" />
+        <button class="btn btn-accent" onclick="redirectSite()">바로가기 ➔</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <span style="font-size:0.85rem; color:#64748b; font-weight:600;">⚡ 추천 사이트 바로가기:</span>
+        <div class="shortcut-grid">
+          <button class="shortcut-btn" onclick="openDirectSite('https://en.wikipedia.org')">📖 위키피디아 영문판</button>
+          <button class="shortcut-btn" onclick="openDirectSite('https://www.bbc.com/news')">📰 BBC News</button>
+          <button class="shortcut-btn" onclick="openDirectSite('https://techcrunch.com')">💻 TechCrunch</button>
+          <button class="shortcut-btn" onclick="openDirectSite('https://dev.to')">✍️ Dev.to 개발 블로그</button>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
+
+  <!-- 2. 단어 / 문장 번역 탭 -->
+  <div id="textTab" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔤 단어 / 문장 입력 번역</div>
+      <textarea id="sourceText" placeholder="번역할 단어나 문장을 입력하세요..."></textarea>
+      <div class="input-row" style="margin-top: 10px;">
+        <button class="btn" onclick="translateDirectText()">번역하기</button>
+        <button class="btn btn-accent" onclick="addCurrentToWordbook()">단어장에 추가</button>
+      </div>
+      <div class="result-box" style="margin-top: 10px;">
+        <strong>번역 결과:</strong>
+        <div id="directTransResult" style="margin-top: 6px; font-size: 1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 단어장 탭 -->
+  <div id="wordbookTab" class="tab-content">
+    <div class="card">
+      <div class="card-title">📓 수동 단어 추가</div>
+      <div class="input-row">
+        <input type="text" id="wbWord" placeholder="단어 (예: Apple)" />
+        <input type="text" id="wbMean" placeholder="뜻 (예: 사과)" />
+        <button class="btn" onclick="addManualWord()">추가</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">저장된 단어 목록</div>
+      <div id="wordList"></div>
+    </div>
+  </div>
+
+  <!-- 4. 독서록 탭 -->
+  <div id="bookTab" class="tab-content">
+    <div class="card">
+      <div class="card-title">📚 새 독서록 작성</div>
+      <div class="input-row">
+        <input type="text" id="bookTitle" placeholder="책 제목" />
+        <input type="text" id="bookAuthor" placeholder="저자" />
+      </div>
+      <textarea id="bookMemo" placeholder="감상평 및 주요 내용 요약..." style="margin-bottom: 10px;"></textarea>
+      <button class="btn" onclick="saveBookLog()">독서록 저장</button>
+    </div>
+    <div class="card">
+      <div class="card-title">독서록 목록</div>
+      <div id="bookList"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-  /* ==========================================
-     기능 1: URL 본문 텍스트 추출 및 번역 로직
-     ========================================== */
-  function setAndTranslate(url) {
-    document.getElementById('textUrlInput').value = url;
-    runTextTranslation();
+  // 탭 전환
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
   }
 
-  async function runTextTranslation() {
-    const url = document.getElementById('textUrlInput').value.trim();
-    const statusBox = document.getElementById('statusBox');
-    const resultGrid = document.getElementById('resultGrid');
-
-    if (!url) {
-      alert('URL을 입력해주세요.');
-      return;
-    }
-
-    statusBox.className = 'status info';
-    statusBox.innerText = '페이지 데이터를 불러와 본문을 파싱하는 중입니다...';
-    resultGrid.style.display = 'none';
-
-    try {
-      // CORS 우회 프록시
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error('페이지를 불러오지 못했습니다.');
-      
-      const data = await res.json();
-      if (!data.contents) throw new Error('내용이 비어있거나 읽을 수 없습니다.');
-
-      // DOM 파싱
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(data.contents, 'text/html');
-
-      // 불필요 요소 제거
-      ['script', 'style', 'nav', 'footer', 'header', 'iframe'].forEach(tag => {
-        doc.querySelectorAll(tag).forEach(el => el.remove());
-      });
-
-      let elements = doc.querySelectorAll('p, h1, h2, h3, li');
-      let textBlocks = [];
-
-      if (elements.length < 3) {
-        const rawText = doc.body ? doc.body.innerText : data.contents;
-        textBlocks = rawText.split('\n').filter(line => line.trim().length > 15).slice(0, 20);
-      } else {
-        elements.forEach(el => {
-          const t = el.innerText.trim();
-          if (t.length > 20) textBlocks.push(t);
-        });
-        textBlocks = textBlocks.slice(0, 15);
-      }
-
-      if (textBlocks.length === 0) throw new Error('추출할 본문 텍스트가 없습니다.');
-
-      statusBox.innerText = `${textBlocks.length}개 문단을 번역 중입니다...`;
-
-      const origBox = document.getElementById('originalContainer');
-      const transBox = document.getElementById('translatedContainer');
-      origBox.innerHTML = '';
-      transBox.innerHTML = '';
-
-      for (let text of textBlocks) {
-        const translated = await translateApi(text);
-
-        const p1 = document.createElement('p');
-        p1.textContent = text;
-        origBox.appendChild(p1);
-
-        const p2 = document.createElement('p');
-        p2.textContent = translated;
-        transBox.appendChild(p2);
-      }
-
-      statusBox.style.display = 'none';
-      resultGrid.style.display = 'grid';
-
-    } catch (err) {
-      statusBox.className = 'status error';
-      statusBox.innerText = `오류 발생: ${err.message}`;
-    }
-  }
-
-  // 구글 번역 Open API
+  // 구글 번역 API
   async function translateApi(text) {
     try {
       const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(text)}`);
       const data = await res.json();
       return data[0].map(item => item[0]).join('');
     } catch {
-      return text + ' (번역 실패)';
+      return '번역에 실패했습니다.';
     }
   }
 
-  /* ==========================================
-     기능 2: 번역된 상태로 웹사이트 직접 이동 로직
-     ========================================== */
-  function getTranslateRedirectUrl(targetUrl) {
-    let url = targetUrl.trim();
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
+  /* 1. URL 번역 기능 */
+  async function runTextTranslation() {
+    const url = document.getElementById('textUrlInput').value.trim();
+    const statusBox = document.getElementById('statusBox');
+    if (!url) return alert('URL을 입력하세요.');
+
+    statusBox.style.display = 'block';
+    statusBox.innerText = '페이지 본문을 읽어오는 중입니다...';
+
+    try {
+      const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data.contents, 'text/html');
+
+      ['script', 'style', 'nav', 'footer', 'header'].forEach(t => doc.querySelectorAll(t).forEach(e => e.remove()));
+      
+      let textBlocks = [];
+      doc.querySelectorAll('p, h1, h2, h3').forEach(el => {
+        const t = el.innerText.trim();
+        if (t.length > 20) textBlocks.push(t);
+      });
+      textBlocks = textBlocks.slice(0, 10);
+
+      const orig = document.getElementById('origContainer');
+      const trans = document.getElementById('transContainer');
+      orig.innerHTML = ''; trans.innerHTML = '';
+
+      for (let t of textBlocks) {
+        const tr = await translateApi(t);
+        orig.innerHTML += `<p style="margin-bottom:8px;">${t}</p>`;
+        trans.innerHTML += `<p style="margin-bottom:8px;">${tr}</p>`;
+      }
+
+      statusBox.style.display = 'none';
+      document.getElementById('resultGrid').style.display = 'grid';
+    } catch (e) {
+      statusBox.innerText = '불러오기 오류가 발생했습니다.';
     }
+  }
+
+  function getTranslateUrl(url) {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
     return `https://translate.google.com/translate?sl=auto&tl=ko&u=${encodeURIComponent(url)}`;
   }
 
-  function redirectTranslatedSite() {
+  function redirectSite() {
     const url = document.getElementById('directUrlInput').value;
-    if (!url) {
-      alert('이동할 URL을 입력해주세요.');
-      return;
-    }
-    window.location.href = getTranslateRedirectUrl(url);
+    if (url) window.location.href = getTranslateUrl(url);
   }
 
-  function openSite(url) {
-    window.location.href = getTranslateRedirectUrl(url);
+  function openDirectSite(url) {
+    window.location.href = getTranslateUrl(url);
   }
+
+  /* 2. 단어/문장 번역 기능 */
+  async function translateDirectText() {
+    const text = document.getElementById('sourceText').value.trim();
+    if (!text) return;
+    const result = await translateApi(text);
+    document.getElementById('directTransResult').innerText = result;
+  }
+
+  /* 3. 단어장 기능 (LocalStorage) */
+  function getWords() { return JSON.parse(localStorage.getItem('words') || '[]'); }
+  function saveWords(words) { localStorage.setItem('words', JSON.stringify(words)); renderWords(); }
+
+  function addManualWord() {
+    const w = document.getElementById('wbWord').value.trim();
+    const m = document.getElementById('wbMean').value.trim();
+    if (!w || !m) return alert('단어와 뜻을 모두 입력하세요.');
+    const words = getWords();
+    words.push({ id: Date.now(), word: w, mean: m });
+    saveWords(words);
+    document.getElementById('wbWord').value = '';
+    document.getElementById('wbMean').value = '';
+  }
+
+  async function addCurrentToWordbook() {
+    const text = document.getElementById('sourceText').value.trim();
+    const result = document.getElementById('directTransResult').innerText.trim();
+    if (!text || !result) return alert('번역을 먼저 진행해 주세요.');
+    const words = getWords();
+    words.push({ id: Date.now(), word: text, mean: result });
+    saveWords(words);
+    alert('단어장에 추가되었습니다.');
+  }
+
+  function deleteWord(id) {
+    saveWords(getWords().filter(w => w.id !== id));
+  }
+
+  function renderWords() {
+    const list = document.getElementById('wordList');
+    const words = getWords();
+    list.innerHTML = words.length === 0 ? '<p style="color:#64748b;">저장된 단어가 없습니다.</p>' : '';
+    words.forEach(w => {
+      list.innerHTML += `
+        <div class="list-item">
+          <div class="list-item-content"><strong>${w.word}</strong> : ${w.mean}</div>
+          <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteWord(${w.id})">삭제</button>
+        </div>`;
+    });
+  }
+
+  /* 4. 독서록 기능 (LocalStorage) */
+  function getBooks() { return JSON.parse(localStorage.getItem('books') || '[]'); }
+  function saveBooks(books) { localStorage.setItem('books', JSON.stringify(books)); renderBooks(); }
+
+  function saveBookLog() {
+    const title = document.getElementById('bookTitle').value.trim();
+    const author = document.getElementById('bookAuthor').value.trim();
+    const memo = document.getElementById('bookMemo').value.trim();
+    if (!title) return alert('책 제목을 입력하세요.');
+
+    const books = getBooks();
+    books.push({ id: Date.now(), title, author, memo, date: new Date().toLocaleDateString() });
+    saveBooks(books);
+
+    document.getElementById('bookTitle').value = '';
+    document.getElementById('bookAuthor').value = '';
+    document.getElementById('bookMemo').value = '';
+  }
+
+  function deleteBook(id) {
+    saveBooks(getBooks().filter(b => b.id !== id));
+  }
+
+  function renderBooks() {
+    const list = document.getElementById('bookList');
+    const books = getBooks();
+    list.innerHTML = books.length === 0 ? '<p style="color:#64748b;">작성된 독서록이 없습니다.</p>' : '';
+    books.forEach(b => {
+      list.innerHTML += `
+        <div class="list-item" style="flex-direction:column; align-items:flex-start; gap:6px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <strong>${b.title} (${b.author || '저자 미상'})</strong>
+            <button class="btn btn-danger" style="padding:2px 6px; font-size:0.75rem;" onclick="deleteBook(${b.id})">삭제</button>
+          </div>
+          <div style="font-size:0.85rem; color:#64748b;">${b.date}</div>
+          <div style="font-size:0.9rem; margin-top:4px;">${b.memo}</div>
+        </div>`;
+    });
+  }
+
+  // 초기 로드
+  renderWords();
+  renderBooks();
 </script>
 
 </body>
