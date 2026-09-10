@@ -3,213 +3,235 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>실시간 웹사이트 자동 번역 바로가기</title>
+  <title>URL 번역기 (기능 분리형)</title>
   <style>
     :root {
-      --primary-color: #2563eb;
+      --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --text-color: #0f172a;
-      --border-color: #cbd5e1;
+      --success: #059669;
+      --success-hover: #047857;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: var(--bg); color: var(--text); padding: 30px 16px; line-height: 1.5; }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    header p { color: #64748b; font-size: 0.95rem; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      line-height: 1.6;
-      padding: 40px 20px;
-    }
+    .card { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; color: #1e293b; }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+    /* 입력폼 스타일 */
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    input[type="url"] { flex: 1; min-width: 260px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; }
+    input[type="url"]:focus { border-color: var(--primary); }
+    
+    .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; color: white; }
+    .btn-blue { background-color: var(--primary); }
+    .btn-blue:hover { background-color: var(--primary-hover); }
+    .btn-green { background-color: var(--success); }
+    .btn-green:hover { background-color: var(--success-hover); }
 
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
+    /* 바로가기 버튼 grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .shortcut-btn { padding: 10px 14px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; text-align: left; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #334155; transition: all 0.2s; }
+    .shortcut-btn:hover { background: #e2e8f0; color: var(--primary); }
 
-    header h1 {
-      font-size: 2rem;
-      color: #1e293b;
-      margin-bottom: 10px;
-    }
+    /* 상태창 및 결과창 */
+    .status { padding: 12px; border-radius: 8px; font-size: 0.9rem; display: none; margin-top: 12px; }
+    .status.info { background-color: #e0f2fe; color: #0369a1; display: block; }
+    .status.error { background-color: #fee2e2; color: #b91c1c; display: block; }
 
-    header p {
-      color: #64748b;
-      font-size: 1rem;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    .input-form {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    input[type="url"] {
-      flex: 1;
-      min-width: 280px;
-      padding: 14px 18px;
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input[type="url"]:focus {
-      border-color: var(--primary-color);
-    }
-
-    button.btn-submit {
-      padding: 14px 28px;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    button.btn-submit:hover {
-      background-color: var(--primary-hover);
-    }
-
-    /* 바로가기 사이트 섹션 */
-    .shortcut-section {
-      border-top: 2px solid #f1f5f9;
-      padding-top: 20px;
-    }
-
-    .shortcut-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #475569;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .shortcut-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-    }
-
-    .site-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background-color: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      text-decoration: none;
-      color: #334155;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.2s ease;
-    }
-
-    .site-card:hover {
-      background-color: #e0e7ff;
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-      transform: translateY(-2px);
-    }
-
-    .site-card span.icon {
-      font-size: 1.2rem;
-    }
+    .result-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+    @media (min-width: 768px) { .result-grid { grid-template-columns: 1fr 1fr; } }
+    
+    .result-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px; max-height: 500px; overflow-y: auto; font-size: 0.95rem; }
+    .result-box h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .result-box p { margin-bottom: 10px; word-break: break-word; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h1>🌐 웹사이트 번역 바로가기</h1>
-    <p>URL을 입력하거나 아래 추천 사이트를 누르면 번역된 상태의 사이트로 이동합니다.</p>
+    <h1>🌐 웹 번역 및 이동 도구 (기능 분리)</h1>
+    <p>본문 텍스트 번역 기능과 사이트 직접 이동 기능을 따로 제공합니다.</p>
   </header>
 
-  <div class="card">
-    <!-- 직접 URL 입력 후 이동 -->
-    <form class="input-form" onsubmit="translateAndRedirect(event)">
-      <input type="url" id="targetUrl" placeholder="https://... 번역하여 이동할 사이트 URL 입력" required />
-      <button type="submit" class="btn-submit">번역 사이트로 이동 ➔</button>
-    </form>
+  <!-- 기능 1: URL 본문 텍스트 추출 및 즉시 번역 -->
+  <section class="card">
+    <div class="card-title">📄 [기능 1] URL 본문 텍스트 추출 및 번역</div>
+    <div class="input-row">
+      <input type="url" id="textUrlInput" placeholder="https://... 번역할 URL 입력" />
+      <button class="btn btn-blue" onclick="runTextTranslation()">본문 번역하기</button>
+    </div>
 
-    <!-- 클릭 시 자동 번역된 해당 사이트로 즉시 이동하는 버튼들 -->
-    <div class="shortcut-section">
-      <div class="shortcut-title">⚡ 클릭 시 한국어로 번역되어 즉시 열리는 추천 사이트</div>
-      <div class="shortcut-grid">
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://en.wikipedia.org')">
-          <span class="icon">📖</span> 위키피디아 영문판
-        </a>
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://news.ycombinator.com')">
-          <span class="icon">🚀</span> 해커뉴스 (Hacker News)
-        </a>
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://www.bbc.com/news')">
-          <span class="icon">📰</span> BBC 뉴스 (BBC News)
-        </a>
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://techcrunch.com')">
-          <span class="icon">💻</span> 테크크런치 (TechCrunch)
-        </a>
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://dev.to')">
-          <span class="icon">✍️</span> Dev.to 개발 블로그
-        </a>
-        <a class="site-card" href="#" onclick="openTranslatedSite('https://www.reddit.com')">
-          <span class="icon">💬</span> 레딧 (Reddit)
-        </a>
+    <!-- 기능 1 전용 추천 사이트 바로가기 (클릭 시 입력창에 들어가고 아래에 번역 출력) -->
+    <div style="margin-top: 10px;">
+      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">추천 번역 대상: </span>
+      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://en.wikipedia.org/wiki/Artificial_intelligence')">위키피디아(AI)</button>
+      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://raw.githubusercontent.com/facebook/react/main/README.md')">GitHub React</button>
+      <button class="shortcut-btn" style="display:inline-block; padding: 4px 10px; font-size: 0.8rem;" onclick="setAndTranslate('https://news.ycombinator.com/')">Hacker News</button>
+    </div>
+
+    <div id="statusBox" class="status"></div>
+
+    <div class="result-grid" id="resultGrid" style="display: none;">
+      <div class="result-box">
+        <h3>원문 (Original)</h3>
+        <div id="originalContainer"></div>
+      </div>
+      <div class="result-box">
+        <h3>번역문 (Korean)</h3>
+        <div id="translatedContainer"></div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- 기능 2: 번역된 상태로 웹사이트 직접 이동 -->
+  <section class="card">
+    <div class="card-title">🚀 [기능 2] 번역된 웹사이트로 직접 이동 (웹서핑)</div>
+    <div class="input-row">
+      <input type="url" id="directUrlInput" placeholder="https://... 이동할 웹사이트 URL 입력" />
+      <button class="btn btn-green" onclick="redirectTranslatedSite()">사이트로 이동 ➔</button>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 8px;">⚡ 클릭 시 번역된 상태로 즉시 이동하는 추천 사이트:</div>
+      <div class="grid">
+        <button class="shortcut-btn" onclick="openSite('https://en.wikipedia.org')">📖 위키피디아 영문판</button>
+        <button class="shortcut-btn" onclick="openSite('https://www.bbc.com/news')">📰 BBC News</button>
+        <button class="shortcut-btn" onclick="openSite('https://techcrunch.com')">💻 TechCrunch</button>
+        <button class="shortcut-btn" onclick="openSite('https://dev.to')">✍️ Dev.to 개발 블로그</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-  // 지정한 URL을 구글 번역 엔진 주소로 변환해 주는 함수
-  function getGoogleTranslateUrl(originalUrl) {
-    // http:// 또는 https:// 가 없는 경우 자동으로 붙여줌
-    let target = originalUrl.trim();
-    if (!target.startsWith('http://') && !target.startsWith('https://')) {
-      target = 'https://' + target;
-    }
-    
-    // sl=auto (자동 언어감지), tl=ko (한국어로 번역), u=대상URL
-    return `https://translate.google.com/translate?sl=auto&tl=ko&u=${encodeURIComponent(target)}`;
+  /* ==========================================
+     기능 1: URL 본문 텍스트 추출 및 번역 로직
+     ========================================== */
+  function setAndTranslate(url) {
+    document.getElementById('textUrlInput').value = url;
+    runTextTranslation();
   }
 
-  // 1. 직접 주소 입력 후 제출 시 해당 웹사이트로 이동
-  function translateAndRedirect(event) {
-    event.preventDefault();
-    const url = document.getElementById('targetUrl').value;
-    if (url) {
-      window.location.href = getGoogleTranslateUrl(url);
+  async function runTextTranslation() {
+    const url = document.getElementById('textUrlInput').value.trim();
+    const statusBox = document.getElementById('statusBox');
+    const resultGrid = document.getElementById('resultGrid');
+
+    if (!url) {
+      alert('URL을 입력해주세요.');
+      return;
+    }
+
+    statusBox.className = 'status info';
+    statusBox.innerText = '페이지 데이터를 불러와 본문을 파싱하는 중입니다...';
+    resultGrid.style.display = 'none';
+
+    try {
+      // CORS 우회 프록시
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error('페이지를 불러오지 못했습니다.');
+      
+      const data = await res.json();
+      if (!data.contents) throw new Error('내용이 비어있거나 읽을 수 없습니다.');
+
+      // DOM 파싱
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data.contents, 'text/html');
+
+      // 불필요 요소 제거
+      ['script', 'style', 'nav', 'footer', 'header', 'iframe'].forEach(tag => {
+        doc.querySelectorAll(tag).forEach(el => el.remove());
+      });
+
+      let elements = doc.querySelectorAll('p, h1, h2, h3, li');
+      let textBlocks = [];
+
+      if (elements.length < 3) {
+        const rawText = doc.body ? doc.body.innerText : data.contents;
+        textBlocks = rawText.split('\n').filter(line => line.trim().length > 15).slice(0, 20);
+      } else {
+        elements.forEach(el => {
+          const t = el.innerText.trim();
+          if (t.length > 20) textBlocks.push(t);
+        });
+        textBlocks = textBlocks.slice(0, 15);
+      }
+
+      if (textBlocks.length === 0) throw new Error('추출할 본문 텍스트가 없습니다.');
+
+      statusBox.innerText = `${textBlocks.length}개 문단을 번역 중입니다...`;
+
+      const origBox = document.getElementById('originalContainer');
+      const transBox = document.getElementById('translatedContainer');
+      origBox.innerHTML = '';
+      transBox.innerHTML = '';
+
+      for (let text of textBlocks) {
+        const translated = await translateApi(text);
+
+        const p1 = document.createElement('p');
+        p1.textContent = text;
+        origBox.appendChild(p1);
+
+        const p2 = document.createElement('p');
+        p2.textContent = translated;
+        transBox.appendChild(p2);
+      }
+
+      statusBox.style.display = 'none';
+      resultGrid.style.display = 'grid';
+
+    } catch (err) {
+      statusBox.className = 'status error';
+      statusBox.innerText = `오류 발생: ${err.message}`;
     }
   }
 
-  // 2. 하단 바로가기 버튼 클릭 시 해당 웹사이트로 이동
-  function openTranslatedSite(url) {
-    window.location.href = getGoogleTranslateUrl(url);
+  // 구글 번역 Open API
+  async function translateApi(text) {
+    try {
+      const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(text)}`);
+      const data = await res.json();
+      return data[0].map(item => item[0]).join('');
+    } catch {
+      return text + ' (번역 실패)';
+    }
+  }
+
+  /* ==========================================
+     기능 2: 번역된 상태로 웹사이트 직접 이동 로직
+     ========================================== */
+  function getTranslateRedirectUrl(targetUrl) {
+    let url = targetUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    return `https://translate.google.com/translate?sl=auto&tl=ko&u=${encodeURIComponent(url)}`;
+  }
+
+  function redirectTranslatedSite() {
+    const url = document.getElementById('directUrlInput').value;
+    if (!url) {
+      alert('이동할 URL을 입력해주세요.');
+      return;
+    }
+    window.location.href = getTranslateRedirectUrl(url);
+  }
+
+  function openSite(url) {
+    window.location.href = getTranslateRedirectUrl(url);
   }
 </script>
 
