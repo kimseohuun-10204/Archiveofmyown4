@@ -36,7 +36,7 @@
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; }
-    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group textarea { resize: vertical; min-height: 100px; }
 
     button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
     button.btn:hover { background: var(--primary-hover); }
@@ -68,7 +68,8 @@
     .paragraph-box .trans { color: #1a1a1a; font-weight: 500; font-size: 1rem; border-top: 1px dashed var(--border); padding-top: 8px; line-height: 1.5; }
 
     .fallback-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 6px; margin-top: 15px; }
-    .setting-toggle { font-size: 0.85rem; color: #666; cursor: pointer; text-decoration: underline; margin-top: 5px; display: inline-block; }
+    .progress-bar { width: 100%; background: #e0e0e0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; display: none; }
+    .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s; }
   </style>
 </head>
 <body>
@@ -121,7 +122,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="log-content">독서록 내용 (인상 깊은 구절, 감상평 등)</label>
+            <label for="log-content">독서록 내용</label>
             <textarea id="log-content" required placeholder="오늘 읽은 내용과 느낀 점을 기록해 보세요."></textarea>
           </div>
           <button type="submit" class="btn">독서록 저장</button>
@@ -137,8 +138,8 @@
     <!-- 3. URL 링크/본문 번역기 -->
     <div id="tab-url-trans" class="tab-content">
       <div class="card">
-        <h2>웹페이지(URL) 및 본문 번역</h2>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">웹페이지 주소를 입력하거나, 보안 차단된 사이트는 본문을 직접 붙여넣어 단락별로 자동 번역 및 저장할 수 있습니다.</p>
+        <h2>웹페이지(URL) 및 본문 무제한 번역</h2>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">웹페이지 주소를 입력하거나 원문을 붙여넣으면 제한 없이 전체 문단을 번역합니다.</p>
         
         <div class="form-group">
           <label for="web-url-input">1️⃣ 웹페이지 주소 (URL)</label>
@@ -146,23 +147,19 @@
             <input type="url" id="web-url-input" placeholder="https://www.gutenberg.org/files/11/11-h/11-h.htm">
             <button type="button" class="btn" onclick="translateUrl()">페이지 불러오기</button>
           </div>
-          <span class="setting-toggle" onclick="toggleCustomProxySetting()">⚙️ 개인 프록시 URL 확인/수정</span>
-          <div id="custom-proxy-box" style="display:none; margin-top:8px;">
-            <input type="text" id="custom-proxy-url" value="https://cool-brook-6d1a.kimseohuun.workers.dev/?url=" style="font-size:0.85rem;">
-          </div>
         </div>
 
         <div id="url-status" style="margin-top: 10px; font-weight: bold; color: var(--primary);"></div>
+        <div id="progress-bar" class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
 
         <div id="fallback-paste-container" class="fallback-box" style="display: none;">
           <h4 style="margin-bottom: 8px; color: #b78103;">💡 원문 텍스트 직접 붙여넣기 번역</h4>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">아래 상자에 소설이나 웹문서 원문을 **직접 복사해서 붙여넣으시면** 즉시 문단별로 번역 처리해 드립니다!</p>
-          <textarea id="fallback-text-input" placeholder="여기에 영문 텍스트 전체를 붙여넣으세요..." style="height: 150px;"></textarea>
-          <button type="button" class="btn" style="background:#e67e22; margin-top:8px;" onclick="processPastedText()">붙여넣은 텍스트 문단별 번역하기</button>
+          <textarea id="fallback-text-input" placeholder="여기에 소설이나 영문 텍스트 전체를 붙여넣으세요..." style="height: 150px;"></textarea>
+          <button type="button" class="btn" style="background:#e67e22; margin-top:8px;" onclick="processPastedText()">텍스트 전체 번역 시작</button>
         </div>
 
         <div id="url-result-container" style="display: none; margin-top: 20px;">
-          <h3 style="margin-bottom: 10px;">번역된 콘텐츠 (단락별)</h3>
+          <h3 style="margin-bottom: 10px;">번역된 결과물</h3>
           <div id="url-paragraphs"></div>
         </div>
       </div>
@@ -171,15 +168,16 @@
     <!-- 4. AI 텍스트 번역기 -->
     <div id="tab-translator" class="tab-content">
       <div class="card">
-        <h2>모르는 단어 / 긴 문장 번역</h2>
+        <h2>단어 / 긴 장문 번역</h2>
         <div class="form-group">
-          <label for="trans-input">번역할 영문 단어 또는 문장</label>
-          <textarea id="trans-input" placeholder="예: The secret is simple: It is only with the heart that one can see rightly."></textarea>
+          <label for="trans-input">번역할 영문 단어 또는 길고 긴 문장</label>
+          <textarea id="trans-input" placeholder="아무리 긴 텍스트라도 제한 없이 전체 번역됩니다."></textarea>
         </div>
         <button type="button" class="btn" onclick="translateText()">번역하기</button>
 
         <div id="trans-result-box" class="translation-result" style="display:none;">
-          <p><strong>번역 결과:</strong> <span id="trans-output"></span></p>
+          <p><strong>번역 결과:</strong></p>
+          <p id="trans-output" style="margin-top:5px; line-height:1.6; white-space: pre-wrap;"></p>
 
           <div class="save-action-group">
             <label for="trans-category-select" style="font-size: 0.85rem; font-weight: 600;">분류 카테고리:</label>
@@ -215,7 +213,7 @@
   </div>
 
   <script>
-    const MY_WORKER_PROXY = "https://cool-brook-6d1a.kimseohuun.workers.dev/?url=";
+    const WORKER_PROXY = "https://cool-brook-6d1a.kimseohuun.workers.dev/?url=";
 
     let books = JSON.parse(localStorage.getItem('books')) || [];
     let logs = JSON.parse(localStorage.getItem('logs')) || [];
@@ -239,11 +237,6 @@
       }
     }
 
-    function toggleCustomProxySetting() {
-      const box = document.getElementById('custom-proxy-box');
-      box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    }
-
     function addNewCategory() {
       const input = document.getElementById('new-category-input');
       const newCat = input.value.trim();
@@ -254,7 +247,6 @@
       localStorage.setItem('categories', JSON.stringify(categories));
       input.value = '';
       initCategories();
-      alert(`'${newCat}' 카테고리가 추가되었습니다.`);
     }
 
     function switchTab(tabId) {
@@ -328,33 +320,78 @@
       `).join('');
     }
 
-    async function fetchHtmlWithProxies(targetUrl) {
-      const customProxy = document.getElementById('custom-proxy-url').value.trim() || MY_WORKER_PROXY;
+    // Google Translate 직접 호출 (CORS 차단 없는 gtx 모드)
+    async function requestGoogleTranslate(text) {
+      if (!text || !text.trim()) return '';
+      try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API 응답 에러');
+        const data = await res.json();
+        
+        if (data && data[0]) {
+          return data[0].map(item => item[0]).join('');
+        }
+      } catch (err) {
+        console.warn('Google direct failed, fallbacking...', err);
+      }
+      return text;
+    }
 
+    // 대용량 문장 안전 순차 번역 (문장 단위 분할 & 순차 처리)
+    async function fetchTranslation(text, progressCallback) {
+      if (!text || !text.trim()) return '';
+
+      // 문장 및 줄바꿈 기호 기준으로 안전 분할 (최대 1000자 단위)
+      const sentences = text.match(/[^.!?\n]+[.!?\n]+/g) || [text];
+      let chunks = [];
+      let temp = "";
+
+      for (let s of sentences) {
+        if ((temp + s).length > 800) {
+          chunks.push(temp);
+          temp = s;
+        } else {
+          temp += s;
+        }
+      }
+      if (temp) chunks.push(temp);
+
+      let translatedResults = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const result = await requestGoogleTranslate(chunks[i]);
+        translatedResults.push(result);
+        if (progressCallback) {
+          progressCallback((i + 1) / chunks.length);
+        }
+        // 서버 서버과부하 방지를 위한 미세 대기
+        await new Promise(r => setTimeout(r, 100));
+      }
+
+      return translatedResults.join(' ');
+    }
+
+    async function fetchHtmlWithProxies(targetUrl) {
       const proxyList = [
-        { type: 'direct', url: customProxy + encodeURIComponent(targetUrl) },
-        { type: 'direct', url: MY_WORKER_PROXY + encodeURIComponent(targetUrl) },
-        { type: 'json_contents', url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}` },
-        { type: 'direct', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` }
+        WORKER_PROXY + encodeURIComponent(targetUrl),
+        `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
       ];
 
-      for (let proxy of proxyList) {
+      for (let url of proxyList) {
         try {
-          const res = await fetch(proxy.url);
+          const res = await fetch(url);
           if (!res.ok) continue;
 
-          if (proxy.type === 'json_contents') {
+          if (url.includes('allorigins')) {
             const data = await res.json();
             if (data && data.contents) return data.contents;
           } else {
             const htmlText = await res.text();
             if (htmlText && htmlText.length > 100) return htmlText;
           }
-        } catch (e) {
-          console.warn('프록시 시도 무시:', proxy.url, e);
-        }
+        } catch (e) {}
       }
-      throw new Error('모든 프록시 서버 접속 실패');
+      throw new Error('접속 실패');
     }
 
     async function translateUrl() {
@@ -363,12 +400,15 @@
       const containerEl = document.getElementById('url-result-container');
       const paragraphsEl = document.getElementById('url-paragraphs');
       const fallbackContainer = document.getElementById('fallback-paste-container');
+      const progressBar = document.getElementById('progress-bar');
+      const progressFill = document.getElementById('progress-fill');
 
-      if (!url) return alert('올바른 URL 주소를 입력해주세요.');
+      if (!url) return alert('URL을 입력해주세요.');
 
-      statusEl.innerText = '페이지 내용 불러오는 중...';
+      statusEl.innerText = '웹페이지 불러오는 중...';
       containerEl.style.display = 'none';
       fallbackContainer.style.display = 'none';
+      progressBar.style.display = 'none';
       paragraphsEl.innerHTML = '';
 
       try {
@@ -380,15 +420,15 @@
         doc.querySelectorAll('script, style, noscript, header, footer, nav, iframe').forEach(el => el.remove());
         
         let texts = [];
-        const rawElements = doc.querySelectorAll('p, pre, div.chapter, article p');
+        const rawElements = doc.querySelectorAll('p, pre, article p');
 
         rawElements.forEach(el => {
           const rawTxt = el.innerText ? el.innerText.trim() : '';
-          if (rawTxt.length > 30) {
+          if (rawTxt.length > 25) {
             const blocks = rawTxt.split(/\n\s*\n/);
             blocks.forEach(b => {
               const cleaned = b.replace(/\s+/g, ' ').trim();
-              if (cleaned.length > 30 && !cleaned.startsWith('***') && !cleaned.includes('Project Gutenberg')) {
+              if (cleaned.length > 25 && !cleaned.includes('Project Gutenberg')) {
                 texts.push(cleaned);
               }
             });
@@ -396,44 +436,47 @@
         });
 
         if (texts.length === 0) {
-          statusEl.innerText = '텍스트 문단을 직접 추출하지 못했습니다.';
+          statusEl.innerText = '본문 추출 실패. 아래에 직접 붙여넣어 주세요.';
           fallbackContainer.style.display = 'block';
           return;
         }
 
-        statusEl.innerText = '문단별 분할 번역 진행 중...';
-        await renderParagraphTranslations(texts.slice(0, 15));
-        statusEl.innerText = '✅ 성공적으로 가져와 번역했습니다!';
+        // 제한 없는 전체 문단 처리
+        await renderParagraphTranslations(texts);
       } catch (err) {
-        console.error(err);
-        statusEl.innerText = '❌ 웹사이트 접속 제한 발생. 원문을 아래에 직접 붙여넣어 주세요.';
+        statusEl.innerText = '❌ 웹사이트 접속 제한 발생. 원문을 아래 직접 붙여넣어 주세요.';
         fallbackContainer.style.display = 'block';
       }
     }
 
     function processPastedText() {
       const rawText = document.getElementById('fallback-text-input').value.trim();
-      if(!rawText) return alert('붙여넣을 텍스트 원문을 입력해 주세요.');
+      if(!rawText) return alert('원문을 입력해 주세요.');
 
-      const paragraphs = rawText.split(/\n\s*\n/).map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 20);
-      if(paragraphs.length === 0) return alert('텍스트 내용이 너무 짧습니다.');
+      const paragraphs = rawText.split(/\n\s*\n/).map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 15);
+      if(paragraphs.length === 0) return alert('텍스트가 너무 짧습니다.');
 
-      document.getElementById('url-status').innerText = '붙여넣은 원문 문단별 번역 처리 중...';
-      renderParagraphTranslations(paragraphs.slice(0, 20));
-      document.getElementById('url-status').innerText = '원문 번역 완료!';
+      renderParagraphTranslations(paragraphs);
     }
 
     async function renderParagraphTranslations(texts) {
+      const statusEl = document.getElementById('url-status');
       const containerEl = document.getElementById('url-result-container');
       const paragraphsEl = document.getElementById('url-paragraphs');
+      const progressBar = document.getElementById('progress-bar');
+      const progressFill = document.getElementById('progress-fill');
 
       containerEl.style.display = 'block';
+      progressBar.style.display = 'block';
       paragraphsEl.innerHTML = '';
 
       const categoryOptionsHtml = categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
 
       for (let i = 0; i < texts.length; i++) {
         const origText = texts[i];
+        statusEl.innerText = `전체 ${texts.length}개 문단 중 ${i + 1}번째 문단 번역 중...`;
+        progressFill.style.width = `${((i + 1) / texts.length) * 100}%`;
+
         const transText = await fetchTranslation(origText);
         const boxId = `url-cat-select-${i}`;
 
@@ -451,57 +494,13 @@
         `;
         paragraphsEl.appendChild(box);
       }
+
+      statusEl.innerText = `✅ 전체 ${texts.length}개 문단 번역 완료!`;
     }
 
     function saveUrlParagraphWord(orig, trans, selectId) {
       const cat = document.getElementById(selectId).value;
       saveDirectWord(orig, trans, cat);
-    }
-
-    // 500자 API 제한 회피용 청크(Chunk) 분할 번역 핵심 함수
-    async function fetchTranslation(text) {
-      if (!text || !text.trim()) return '';
-
-      // API 500자 제한을 넘지 않도록 350자 단위 분할
-      const chunkSize = 350;
-      const chunks = [];
-      for (let i = 0; i < text.length; i += chunkSize) {
-        chunks.push(text.substring(i, i + chunkSize));
-      }
-
-      try {
-        const translatedChunks = await Promise.all(chunks.map(async (chunk) => {
-          // 1차 시도: MyMemory API
-          try {
-            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|ko`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.responseData && data.responseData.translatedText) {
-                return data.responseData.translatedText;
-              }
-            }
-          } catch (e) {}
-
-          // 2차 시도: Google 번역 프록시
-          try {
-            const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=${encodeURIComponent(chunk)}`;
-            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(gUrl)}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data[0]) {
-                return data[0].map(item => item[0]).join('');
-              }
-            }
-          } catch (e) {}
-
-          return chunk; // 실패 시 원문 조각 유지
-        }));
-
-        return translatedChunks.join(' ');
-      } catch (err) {
-        console.error('번역 처리 에러:', err);
-        return '번역 중 오류가 발생했습니다.';
-      }
     }
 
     async function translateText() {
@@ -510,7 +509,7 @@
 
       const outputEl = document.getElementById('trans-output');
       const resultBox = document.getElementById('trans-result-box');
-      outputEl.innerText = '번역 처리 중...';
+      outputEl.innerText = '실시간 분석 및 번역 중...';
       resultBox.style.display = 'block';
 
       const translatedText = await fetchTranslation(text);
