@@ -385,7 +385,6 @@
         rawElements.forEach(el => {
           const rawTxt = el.innerText ? el.innerText.trim() : '';
           if (rawTxt.length > 30) {
-            // 구텐베르크 특유의 긴 텍스트 블록을 두 줄 공백 기준으로 문단 분할
             const blocks = rawTxt.split(/\n\s*\n/);
             blocks.forEach(b => {
               const cleaned = b.replace(/\s+/g, ' ').trim();
@@ -402,7 +401,7 @@
           return;
         }
 
-        statusEl.innerText = '문단별 번역 진행 중...';
+        statusEl.innerText = '문단별 분할 번역 진행 중...';
         await renderParagraphTranslations(texts.slice(0, 15));
         statusEl.innerText = '✅ 성공적으로 가져와 번역했습니다!';
       } catch (err) {
@@ -459,40 +458,50 @@
       saveDirectWord(orig, trans, cat);
     }
 
-    // 브라우저 CORS 차단 없는 다중 우회 번역 엔진
+    // 500자 API 제한 회피용 청크(Chunk) 분할 번역 핵심 함수
     async function fetchTranslation(text) {
       if (!text || !text.trim()) return '';
 
-      const safeText = text.length > 800 ? text.substring(0, 800) : text;
-
-      // 1차 시도: MyMemory API (CORS 자율 오픈)
-      try {
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(safeText)}&langpair=en|ko`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.responseData && data.responseData.translatedText) {
-            return data.responseData.translatedText;
-          }
-        }
-      } catch (e) {
-        console.warn('1차 번역 서버 실패, 우회 엔진 시도중...', e);
+      // API 500자 제한을 넘지 않도록 350자 단위 분할
+      const chunkSize = 350;
+      const chunks = [];
+      for (let i = 0; i < text.length; i += chunkSize) {
+        chunks.push(text.substring(i, i + chunkSize));
       }
 
-      // 2차 시도: CORS 우회 프록시 + 구글 엔진
       try {
-        const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=${encodeURIComponent(safeText)}`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(gUrl)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data[0]) {
-            return data[0].map(item => item[0]).join('');
-          }
-        }
-      } catch (e) {
-        console.warn('2차 번역 서버 실패', e);
-      }
+        const translatedChunks = await Promise.all(chunks.map(async (chunk) => {
+          // 1차 시도: MyMemory API
+          try {
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=en|ko`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.responseData && data.responseData.translatedText) {
+                return data.responseData.translatedText;
+              }
+            }
+          } catch (e) {}
 
-      return '번역에 실패했습니다. (네트워크/보안 차단)';
+          // 2차 시도: Google 번역 프록시
+          try {
+            const gUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=${encodeURIComponent(chunk)}`;
+            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(gUrl)}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data[0]) {
+                return data[0].map(item => item[0]).join('');
+              }
+            }
+          } catch (e) {}
+
+          return chunk; // 실패 시 원문 조각 유지
+        }));
+
+        return translatedChunks.join(' ');
+      } catch (err) {
+        console.error('번역 처리 에러:', err);
+        return '번역 중 오류가 발생했습니다.';
+      }
     }
 
     async function translateText() {
