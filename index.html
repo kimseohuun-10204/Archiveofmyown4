@@ -138,7 +138,7 @@
     <div id="tab-url-trans" class="tab-content">
       <div class="card">
         <h2>웹페이지(URL) 및 본문 번역</h2>
-        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">웹페이지 주소를 입력하거나, 보안 차단된 경우 본문을 직접 붙여넣어 문단별로 자동 번역 및 분류 저장할 수 있습니다.</p>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">웹페이지 주소를 입력하거나, 보안 차단된 사이트는 본문을 직접 붙여넣어 단락별로 자동 번역 및 저장할 수 있습니다.</p>
         
         <div class="form-group">
           <label for="web-url-input">1️⃣ 웹페이지 주소 (URL)</label>
@@ -156,8 +156,8 @@
 
         <div id="fallback-paste-container" class="fallback-box" style="display: none;">
           <h4 style="margin-bottom: 8px; color: #b78103;">💡 원문 텍스트 직접 붙여넣기 번역</h4>
-          <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">아래 상자에 웹페이지 글 원문을 **직접 복사해서 붙여넣으시면** 즉시 문단별로 자동 번역해 드립니다!</p>
-          <textarea id="fallback-text-input" placeholder="여기에 영문 텍스트 전체를 붙여넣으세요..." style="height: 120px;"></textarea>
+          <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">아래 상자에 소설이나 웹문서 원문을 **직접 복사해서 붙여넣으시면** 즉시 문단별로 구글 번역 처리해 드립니다!</p>
+          <textarea id="fallback-text-input" placeholder="여기에 영문 텍스트 전체를 붙여넣으세요..." style="height: 150px;"></textarea>
           <button type="button" class="btn" style="background:#e67e22; margin-top:8px;" onclick="processPastedText()">붙여넣은 텍스트 문단별 번역하기</button>
         </div>
 
@@ -171,7 +171,7 @@
     <!-- 4. AI 텍스트 번역기 -->
     <div id="tab-translator" class="tab-content">
       <div class="card">
-        <h2>모르는 단어 / 문장 번역 (AI)</h2>
+        <h2>모르는 단어 / 긴 문장 번역 (구글 엔진)</h2>
         <div class="form-group">
           <label for="trans-input">번역할 영문 단어 또는 문장</label>
           <textarea id="trans-input" placeholder="예: The secret is simple: It is only with the heart that one can see rightly."></textarea>
@@ -332,7 +332,6 @@
     async function fetchHtmlWithProxies(targetUrl) {
       const customProxy = document.getElementById('custom-proxy-url').value.trim() || MY_WORKER_PROXY;
 
-      // 개인 Cloudflare Worker를 최우선 순위로 설정
       const proxyList = [
         { type: 'direct', url: customProxy + encodeURIComponent(targetUrl) },
         { type: 'direct', url: MY_WORKER_PROXY + encodeURIComponent(targetUrl) },
@@ -394,8 +393,8 @@
           return;
         }
 
-        renderParagraphTranslations(texts.slice(0, 10));
-        statusEl.innerText = '✅ 성공적으로 불러와 번역했습니다!';
+        renderParagraphTranslations(texts.slice(0, 15));
+        statusEl.innerText = '✅ 성공적으로 불러와 구글 번역 처리했습니다!';
       } catch (err) {
         console.error(err);
         statusEl.innerText = '❌ 웹사이트 접속 제한 발생. 원문 텍스트를 복사해서 아래에 붙여넣어 주세요.';
@@ -410,9 +409,9 @@
       const paragraphs = rawText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 15);
       if(paragraphs.length === 0) return alert('텍스트 내용이 너무 짧습니다.');
 
-      document.getElementById('url-status').innerText = '붙여넣은 원문 단락별 번역 처리 중...';
-      renderParagraphTranslations(paragraphs.slice(0, 10));
-      document.getElementById('url-status').innerText = '원문 붙여넣기 번역 완료!';
+      document.getElementById('url-status').innerText = '붙여넣은 원문 문단별 구글 번역 처리 중...';
+      renderParagraphTranslations(paragraphs.slice(0, 20));
+      document.getElementById('url-status').innerText = '원문 붙여넣기 구글 번역 완료!';
     }
 
     async function renderParagraphTranslations(texts) {
@@ -450,13 +449,22 @@
       saveDirectWord(orig, trans, cat);
     }
 
+    // 구글 번역 무료 엔진 적용 (글자 수 제한 대폭 상향)
     async function fetchTranslation(text) {
+      if (!text || !text.trim()) return '';
+
       try {
-        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ko`);
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
+        const response = await fetch(url);
         const data = await response.json();
-        return data.responseData.translatedText || '번역 실패';
-      } catch {
-        return '번역 중 오류 발생';
+
+        if (data && data[0]) {
+          return data[0].map(item => item[0]).join('');
+        }
+        return '번역 결과를 가져오지 못했습니다.';
+      } catch (err) {
+        console.error('구글 번역 에러:', err);
+        return '번역 처리 중 오류가 발생했습니다.';
       }
     }
 
@@ -466,7 +474,7 @@
 
       const outputEl = document.getElementById('trans-output');
       const resultBox = document.getElementById('trans-result-box');
-      outputEl.innerText = '번역 중...';
+      outputEl.innerText = '구글 번역 처리 중...';
       resultBox.style.display = 'block';
 
       const translatedText = await fetchTranslation(text);
