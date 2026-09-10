@@ -23,7 +23,6 @@
     header { text-align: center; margin-bottom: 10px; }
     header h1 { font-size: 1.8rem; color: #1a1a1a; }
 
-    /* Navigation Tabs */
     .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
     .tab-btn { padding: 10px 20px; border: none; background: none; font-size: 1rem; cursor: pointer; font-weight: bold; color: #777; }
     .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
@@ -31,7 +30,6 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Cards & Forms */
     .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #444; }
 
@@ -43,52 +41,47 @@
     button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
     button.btn:hover { background: var(--primary-hover); }
 
-    /* Book & Log List */
     .item-list { display: grid; gap: 15px; }
     .item-card { border: 1px solid var(--border); border-radius: 6px; padding: 15px; background: #fff; }
     .item-card h3 { margin-bottom: 5px; color: #111; }
     .item-card p { font-size: 0.9rem; color: #555; margin-bottom: 5px; }
     .item-card .date { font-size: 0.8rem; color: #888; }
 
-    /* Translation Area */
     .translation-result { margin-top: 15px; padding: 15px; background: #eef5fc; border-radius: 4px; border-left: 4px solid var(--primary); word-break: break-all; }
     .save-action-group { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
     .save-action-group select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; }
 
-    /* Vocab Section */
     .vocab-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
     .category-add-box { display: flex; gap: 5px; }
     .category-add-box input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
 
     .saved-words-list { list-style: none; }
     .saved-words-list li { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px; }
-    .saved-words-list li:last-child { border-bottom: none; }
     
     .badge { display: inline-block; background: var(--badge-bg); color: var(--badge-text); font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; margin-bottom: 5px; }
     .delete-btn { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
 
-    /* URL & Direct Input Specific Style */
     .url-input-group { display: flex; gap: 10px; }
     .url-input-group input { flex: 1; }
     .paragraph-box { background: white; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; }
     .paragraph-box .orig { color: #555; margin-bottom: 8px; font-size: 0.95rem; }
     .paragraph-box .trans { color: #1a1a1a; font-weight: 500; font-size: 1rem; border-top: 1px dashed var(--border); padding-top: 8px; }
 
-    .divider { height: 1px; background: var(--border); margin: 20px 0; }
-    .notice-box { background: #fff8e6; border: 1px solid #ffe58f; padding: 12px; border-radius: 6px; font-size: 0.88rem; color: #8c6b00; margin-bottom: 15px; }
+    .fallback-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .setting-toggle { font-size: 0.85rem; color: #666; cursor: pointer; text-decoration: underline; margin-top: 5px; display: inline-block; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>📚 AI 독서록 & 스마트 번역기</h1>
+      <h1>📚 AI 독서록 & 웹페이지 번역기</h1>
     </header>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('tab-books')">도서 등록/목록</button>
       <button class="tab-btn" onclick="switchTab('tab-logs')">독서록 작성</button>
-      <button class="tab-btn" onclick="switchTab('tab-url-trans')">🌐 웹페이지 / 본문 번역</button>
+      <button class="tab-btn" onclick="switchTab('tab-url-trans')">🌐 링크/본문 번역기</button>
       <button class="tab-btn" onclick="switchTab('tab-translator')">AI 텍스트 번역기</button>
       <button class="tab-btn" onclick="switchTab('tab-vocab')">📁 저장된 단어장(분류)</button>
     </div>
@@ -141,35 +134,35 @@
       </div>
     </div>
 
-    <!-- 3. URL 링크 및 본문 번역기 (자동 다중 우회 + 직접 붙여넣기 지원) -->
+    <!-- 3. URL 링크/본문 번역기 -->
     <div id="tab-url-trans" class="tab-content">
       <div class="card">
-        <h2>🌐 웹페이지 URL 번역 (다중 우회 지원)</h2>
-        <div class="notice-box">
-          ✨ **확장 프로그램 설치 없이도 작동 가능!** 3개의 우회 프록시 서버를 순차적으로 시도합니다.
-        </div>
+        <h2>웹페이지(URL) 및 본문 번역</h2>
+        <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">웹페이지 주소를 입력하거나, 보안 차단된 경우 본문을 직접 붙여넣어 문단별로 자동 번역 및 분류 저장할 수 있습니다.</p>
         
         <div class="form-group">
-          <label for="web-url-input">번역할 웹페이지 주소 (URL)</label>
+          <label for="web-url-input">1️⃣ 웹페이지 주소 (URL)</label>
           <div class="url-input-group">
             <input type="url" id="web-url-input" placeholder="https://en.wikipedia.org/wiki/Reading">
-            <button type="button" class="btn" onclick="translateUrl()">URL 번역</button>
+            <button type="button" class="btn" onclick="translateUrl()">페이지 불러오기</button>
+          </div>
+          <span class="setting-toggle" onclick="toggleCustomProxySetting()">⚙️ 개인 프록시 URL 확인/수정</span>
+          <div id="custom-proxy-box" style="display:none; margin-top:8px;">
+            <input type="text" id="custom-proxy-url" value="https://cool-brook-6d1a.kimseohuun.workers.dev/?url=" style="font-size:0.85rem;">
           </div>
         </div>
 
-        <div class="divider"></div>
+        <div id="url-status" style="margin-top: 10px; font-weight: bold; color: var(--primary);"></div>
 
-        <h2>📝 텍스트 직접 붙여넣기 번역 (보안 차단 사이트용)</h2>
-        <p style="font-size:0.85rem; color:#666; margin-bottom:10px;">보안이 매우 강력한 뉴스/포털 사이트 글은 아래 박스에 붙여넣으면 즉시 단락별로 분석·번역해 드립니다.</p>
-        <div class="form-group">
-          <textarea id="direct-paste-input" placeholder="웹사이트에서 복사한 본문 전체를 여기에 붙여넣으세요..." style="min-height:120px;"></textarea>
+        <div id="fallback-paste-container" class="fallback-box" style="display: none;">
+          <h4 style="margin-bottom: 8px; color: #b78103;">💡 원문 텍스트 직접 붙여넣기 번역</h4>
+          <p style="font-size: 0.85rem; color: #555; margin-bottom: 10px;">아래 상자에 웹페이지 글 원문을 **직접 복사해서 붙여넣으시면** 즉시 문단별로 자동 번역해 드립니다!</p>
+          <textarea id="fallback-text-input" placeholder="여기에 영문 텍스트 전체를 붙여넣으세요..." style="height: 120px;"></textarea>
+          <button type="button" class="btn" style="background:#e67e22; margin-top:8px;" onclick="processPastedText()">붙여넣은 텍스트 문단별 번역하기</button>
         </div>
-        <button type="button" class="btn" style="background:#27ae60;" onclick="translatePastedText()">붙여넣은 본문 번역</button>
-
-        <div id="url-status" style="margin-top: 15px; font-weight: bold; color: var(--primary);"></div>
 
         <div id="url-result-container" style="display: none; margin-top: 20px;">
-          <h3 style="margin-bottom: 10px;">번역 및 분석 결과</h3>
+          <h3 style="margin-bottom: 10px;">번역된 콘텐츠 (단락별)</h3>
           <div id="url-paragraphs"></div>
         </div>
       </div>
@@ -178,7 +171,7 @@
     <!-- 4. AI 텍스트 번역기 -->
     <div id="tab-translator" class="tab-content">
       <div class="card">
-        <h2>모르는 단어 / 짧은 문장 번역 (AI)</h2>
+        <h2>모르는 단어 / 문장 번역 (AI)</h2>
         <div class="form-group">
           <label for="trans-input">번역할 영문 단어 또는 문장</label>
           <textarea id="trans-input" placeholder="예: The secret is simple: It is only with the heart that one can see rightly."></textarea>
@@ -197,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 5. 저장된 단어장 (분류 기능 지원) -->
+    <!-- 5. 저장된 단어장 -->
     <div id="tab-vocab" class="tab-content">
       <div class="card">
         <h2>저장된 단어 및 문장 관리</h2>
@@ -222,7 +215,9 @@
   </div>
 
   <script>
-    // LocalStorage Data Management
+    // 내 개인 Cloudflare 우회 Worker 서버 주소
+    const MY_WORKER_PROXY = "https://cool-brook-6d1a.kimseohuun.workers.dev/?url=";
+
     let books = JSON.parse(localStorage.getItem('books')) || [];
     let logs = JSON.parse(localStorage.getItem('logs')) || [];
     let vocab = JSON.parse(localStorage.getItem('vocab')) || [];
@@ -230,7 +225,6 @@
 
     let currentTranslation = { original: '', translated: '' };
 
-    // Initialize Categories
     function initCategories() {
       const dropdowns = document.querySelectorAll('.category-select-dropdown');
       dropdowns.forEach(select => {
@@ -246,6 +240,11 @@
       }
     }
 
+    function toggleCustomProxySetting() {
+      const box = document.getElementById('custom-proxy-box');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
     function addNewCategory() {
       const input = document.getElementById('new-category-input');
       const newCat = input.value.trim();
@@ -259,22 +258,18 @@
       alert(`'${newCat}' 카테고리가 추가되었습니다.`);
     }
 
-    // Tab Switcher
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       
       document.getElementById(tabId).classList.add('active');
-      if (event && event.target) {
-        event.target.classList.add('active');
-      }
+      if (event && event.target) event.target.classList.add('active');
 
       if (tabId === 'tab-logs') populateBookSelect();
       if (tabId === 'tab-vocab') renderVocab();
       initCategories();
     }
 
-    // --- 1. 책 관리 ---
     document.getElementById('book-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const title = document.getElementById('book-title').value;
@@ -302,7 +297,6 @@
       `).join('');
     }
 
-    // --- 2. 독서록 관리 ---
     function populateBookSelect() {
       const select = document.getElementById('log-book-select');
       select.innerHTML = '<option value="">책을 선택하세요</option>' + 
@@ -314,14 +308,8 @@
       const bookTitle = document.getElementById('log-book-select').value;
       const content = document.getElementById('log-content').value;
 
-      logs.push({
-        id: Date.now(),
-        bookTitle,
-        content,
-        date: new Date().toLocaleDateString('ko-KR')
-      });
+      logs.push({ id: Date.now(), bookTitle, content, date: new Date().toLocaleDateString('ko-KR') });
       localStorage.setItem('logs', JSON.stringify(logs));
-
       document.getElementById('log-content').value = '';
       renderLogs();
     });
@@ -341,36 +329,34 @@
       `).join('');
     }
 
-    // --- 3. URL 및 다중 우회 웹페이지 번역 ---
-    async function fetchWebPageWithProxies(targetUrl) {
+    async function fetchHtmlWithProxies(targetUrl) {
+      const customProxy = document.getElementById('custom-proxy-url').value.trim() || MY_WORKER_PROXY;
+
+      // 개인 Cloudflare Worker를 최우선 순위로 설정
       const proxyList = [
-        async (url) => {
-          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-          if (!res.ok) throw new Error('Proxy 1 failed');
-          const data = await res.json();
-          return data.contents;
-        },
-        async (url) => {
-          const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-          if (!res.ok) throw new Error('Proxy 2 failed');
-          return await res.text();
-        },
-        async (url) => {
-          const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
-          if (!res.ok) throw new Error('Proxy 3 failed');
-          return await res.text();
-        }
+        { type: 'direct', url: customProxy + encodeURIComponent(targetUrl) },
+        { type: 'direct', url: MY_WORKER_PROXY + encodeURIComponent(targetUrl) },
+        { type: 'json_contents', url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}` },
+        { type: 'direct', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` }
       ];
 
-      for (let i = 0; i < proxyList.length; i++) {
+      for (let proxy of proxyList) {
         try {
-          const html = await proxyList[i](targetUrl);
-          if (html && html.length > 100) return html;
+          const res = await fetch(proxy.url);
+          if (!res.ok) continue;
+
+          if (proxy.type === 'json_contents') {
+            const data = await res.json();
+            if (data && data.contents) return data.contents;
+          } else {
+            const htmlText = await res.text();
+            if (htmlText && htmlText.length > 100) return htmlText;
+          }
         } catch (e) {
-          console.warn(`Proxy ${i + 1} attempt failed.`);
+          console.warn('프록시 시도 무시:', proxy.url, e);
         }
       }
-      throw new Error('보안 방화벽으로 인해 우회 접속에 실패했습니다.');
+      throw new Error('모든 프록시 서버 접속 실패');
     }
 
     async function translateUrl() {
@@ -378,18 +364,20 @@
       const statusEl = document.getElementById('url-status');
       const containerEl = document.getElementById('url-result-container');
       const paragraphsEl = document.getElementById('url-paragraphs');
+      const fallbackContainer = document.getElementById('fallback-paste-container');
 
       if (!url) return alert('올바른 URL 주소를 입력해주세요.');
 
-      statusEl.innerText = '다중 우회 프록시 서버를 이용해 웹페이지 텍스트를 수집하는 중...';
+      statusEl.innerText = '개인 우회 서버를 통해 웹페이지 접속 중...';
       containerEl.style.display = 'none';
+      fallbackContainer.style.display = 'none';
       paragraphsEl.innerHTML = '';
 
       try {
-        const rawHtml = await fetchWebPageWithProxies(url);
+        const htmlContent = await fetchHtmlWithProxies(url);
 
         const parser = new DOMParser();
-        const doc = parser.parseFromString(rawHtml, 'text/html');
+        const doc = parser.parseFromString(htmlContent, 'text/html');
 
         doc.querySelectorAll('script, style, noscript, header, footer, nav, iframe').forEach(el => el.remove());
         const elements = doc.querySelectorAll('p, article h1, article h2, article h3, article p');
@@ -397,49 +385,40 @@
         let texts = [];
         elements.forEach(el => {
           const txt = el.innerText ? el.innerText.trim() : '';
-          if (txt.length > 20) {
-            texts.push(txt);
-          }
+          if (txt.length > 25) texts.push(txt);
         });
 
         if (texts.length === 0) {
-          statusEl.innerText = '웹페이지에서 번역할 텍스트 단락을 추출하지 못했습니다. 아래 [붙여넣기 번역]을 이용해 보세요!';
+          statusEl.innerText = '페이지에서 텍스트 단락을 추출하지 못했습니다.';
+          fallbackContainer.style.display = 'block';
           return;
         }
 
         renderParagraphTranslations(texts.slice(0, 10));
+        statusEl.innerText = '✅ 성공적으로 불러와 번역했습니다!';
       } catch (err) {
         console.error(err);
-        statusEl.innerText = '❌ 해당 URL은 보안 정책(Cloudflare 등)으로 외부 우회 접근이 완전히 막혀 있습니다. 아래 "본문 붙여넣기 번역"을 활용해 주세요!';
+        statusEl.innerText = '❌ 웹사이트 접속 제한 발생. 원문 텍스트를 복사해서 아래에 붙여넣어 주세요.';
+        fallbackContainer.style.display = 'block';
       }
     }
 
-    function translatePastedText() {
-      const rawText = document.getElementById('direct-paste-input').value.trim();
-      const statusEl = document.getElementById('url-status');
+    function processPastedText() {
+      const rawText = document.getElementById('fallback-text-input').value.trim();
+      if(!rawText) return alert('붙여넣을 텍스트 원문을 입력해 주세요.');
 
-      if (!rawText) return alert('붙여넣을 본문 내용을 입력해주세요.');
+      const paragraphs = rawText.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 15);
+      if(paragraphs.length === 0) return alert('텍스트 내용이 너무 짧습니다.');
 
-      statusEl.innerText = '붙여넣은 본문을 단락별로 분석 중...';
-      
-      const paragraphs = rawText.split('\n')
-        .map(p => p.trim())
-        .filter(p => p.length > 5);
-
-      if (paragraphs.length === 0) {
-        statusEl.innerText = '유효한 문단을 찾지 못했습니다.';
-        return;
-      }
-
-      renderParagraphTranslations(paragraphs.slice(0, 15));
+      document.getElementById('url-status').innerText = '붙여넣은 원문 단락별 번역 처리 중...';
+      renderParagraphTranslations(paragraphs.slice(0, 10));
+      document.getElementById('url-status').innerText = '원문 붙여넣기 번역 완료!';
     }
 
     async function renderParagraphTranslations(texts) {
-      const statusEl = document.getElementById('url-status');
       const containerEl = document.getElementById('url-result-container');
       const paragraphsEl = document.getElementById('url-paragraphs');
 
-      statusEl.innerText = `총 ${texts.length}개 단락 번역 진행 중...`;
       containerEl.style.display = 'block';
       paragraphsEl.innerHTML = '';
 
@@ -464,8 +443,6 @@
         `;
         paragraphsEl.appendChild(box);
       }
-
-      statusEl.innerText = '✅ 모든 단락 번역이 완료되었습니다!';
     }
 
     function saveUrlParagraphWord(orig, trans, selectId) {
@@ -483,7 +460,6 @@
       }
     }
 
-    // --- 4. AI 텍스트 번역기 ---
     async function translateText() {
       const text = document.getElementById('trans-input').value.trim();
       if (!text) return alert('번역할 내용을 입력해주세요.');
@@ -498,7 +474,6 @@
       currentTranslation = { original: text, translated: translatedText };
     }
 
-    // --- 5. 단어장 관리 (분류 기능 지원) ---
     function saveWord() {
       if (!currentTranslation.original) return;
       const category = document.getElementById('trans-category-select').value || '일반';
@@ -549,10 +524,9 @@
     }
 
     function escapeHtmlForAttr(str) {
-      return str.replace(/'/g, "\'").replace(/"/g, "&quot;");
+      return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     }
 
-    // 초기 로딩
     initCategories();
     renderBooks();
     renderLogs();
