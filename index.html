@@ -3,649 +3,367 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 독서록 & 웹페이지 번역기</title>
+  <title>스마트 웹 URL 자동 번역기</title>
   <style>
     :root {
-      --bg-color: #f4f6f8;
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-color: #f8fafc;
       --card-bg: #ffffff;
-      --primary: #4a90e2;
-      --primary-hover: #357abd;
-      --text: #333333;
-      --border: #e1e4e8;
-      --badge-bg: #e2e8f0;
-      --badge-text: #475569;
+      --text-color: #1e293b;
+      --border-color: #e2e8f0;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text); padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    header { text-align: center; margin-bottom: 10px; }
-    header h1 { font-size: 1.8rem; color: #1a1a1a; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+    }
 
-    .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn { padding: 10px 20px; border: none; background: none; font-size: 1rem; cursor: pointer; font-weight: bold; color: #777; }
-    .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
 
-    .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #444; }
+    header h1 {
+      font-size: 1.8rem;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
 
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; }
-    .form-group textarea { resize: vertical; min-height: 100px; }
+    header p {
+      color: #64748b;
+      font-size: 0.95rem;
+    }
 
-    button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
-    button.btn:hover { background: var(--primary-hover); }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+    }
 
-    .item-list { display: grid; gap: 15px; }
-    .item-card { border: 1px solid var(--border); border-radius: 6px; padding: 15px; background: #fff; }
-    .item-card h3 { margin-bottom: 5px; color: #111; }
-    .item-card p { font-size: 0.9rem; color: #555; margin-bottom: 5px; }
-    .item-card .date { font-size: 0.8rem; color: #888; }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
 
-    .translation-result { margin-top: 15px; padding: 15px; background: #eef5fc; border-radius: 4px; border-left: 4px solid var(--primary); word-break: break-all; }
-    .save-action-group { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
-    .save-action-group select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; }
+    input[type="url"] {
+      flex: 1;
+      min-width: 280px;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
 
-    .vocab-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
-    .category-add-box { display: flex; gap: 5px; }
-    .category-add-box input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
+    input[type="url"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
 
-    .saved-words-list { list-style: none; }
-    .saved-words-list li { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px; border-bottom: 1px solid var(--border); gap: 10px; }
-    
-    .badge { display: inline-block; background: var(--badge-bg); color: var(--badge-text); font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; margin-bottom: 5px; }
-    .delete-btn { background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 0.8rem; }
+    select {
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background-color: #fff;
+      cursor: pointer;
+    }
 
-    .url-input-group { display: flex; gap: 10px; }
-    .url-input-group input { flex: 1; }
-    .paragraph-box { background: white; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; }
-    .paragraph-box .orig { color: #555; margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; }
-    .paragraph-box .trans { color: #1a1a1a; font-weight: 500; font-size: 1rem; border-top: 1px dashed var(--border); padding-top: 8px; line-height: 1.5; }
+    button.btn-translate {
+      padding: 12px 24px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-    .fallback-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 6px; margin-top: 15px; }
-    .progress-bar { width: 100%; background: #e0e0e0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; display: none; }
-    .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.2s; }
+    button.btn-translate:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* 바로가기 URL 칩 스타일 */
+    .shortcuts {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .shortcuts-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-right: 4px;
+    }
+
+    .chip {
+      background-color: #f1f5f9;
+      color: #334155;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: 1px solid #cbd5e1;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chip:hover {
+      background-color: #e2e8f0;
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      font-size: 0.95rem;
+    }
+
+    .status.loading {
+      display: block;
+      background-color: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .status.error {
+      display: block;
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .result-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .result-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .result-box {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .result-box h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+      color: #334155;
+    }
+
+    .content-area p {
+      margin-bottom: 12px;
+      word-break: break-word;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h1>📚 AI 독서록 & 웹페이지 번역기</h1>
-    </header>
+<div class="container">
+  <header>
+    <h1>🌐 스마트 웹 URL 자동 번역기</h1>
+    <p>공개 프록시 및 DOM 파서를 활용해 원문 사이트 텍스트 추출 후 바로 번역합니다.</p>
+  </header>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab(event, 'tab-books')">도서 등록/목록</button>
-      <button class="tab-btn" onclick="switchTab(event, 'tab-logs')">독서록 작성</button>
-      <button class="tab-btn" onclick="switchTab(event, 'tab-url-trans')">🌐 링크/본문 번역기</button>
-      <button class="tab-btn" onclick="switchTab(event, 'tab-translator')">AI 텍스트 번역기</button>
-      <button class="tab-btn" onclick="switchTab(event, 'tab-vocab')">📁 저장된 단어장(분류)</button>
+  <div class="card">
+    <div class="input-group">
+      <input type="url" id="targetUrl" placeholder="https://... 번역할 URL을 입력하세요" />
+      <select id="targetLang">
+        <option value="ko" selected>한국어 (Korean)</option>
+        <option value="en">영어 (English)</option>
+        <option value="ja">일본어 (Japanese)</option>
+        <option value="zh-CN">중국어 (Chinese)</option>
+      </select>
+      <button class="btn-translate" onclick="startTranslation()">번역하기</button>
     </div>
 
-    <!-- 1. 도서 등록 및 목록 -->
-    <div id="tab-books" class="tab-content active">
-      <div class="card">
-        <h2>새 책 등록하기</h2>
-        <form id="book-form">
-          <div class="form-group">
-            <label for="book-title">책 제목</label>
-            <input type="text" id="book-title" required placeholder="예: 어린 왕자">
-          </div>
-          <div class="form-group">
-            <label for="book-author">저자</label>
-            <input type="text" id="book-author" required placeholder="예: 앙투안 드 생텍쥐페리">
-          </div>
-          <button type="submit" class="btn">책 추가</button>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>내 서재</h2>
-        <div id="books-list" class="item-list"></div>
-      </div>
+    <!-- 링크 입력칸 밑 바로가기 URL 칩 -->
+    <div class="shortcuts">
+      <span class="shortcuts-label">⚡ 추천 바로가기:</span>
+      <button class="chip" onclick="setAndTranslate('https://en.wikipedia.org/wiki/Artificial_intelligence')">📖 영문 위키피디아 (AI)</button>
+      <button class="chip" onclick="setAndTranslate('https://raw.githubusercontent.com/facebook/react/main/README.md')">💻 GitHub React (README)</button>
+      <button class="chip" onclick="setAndTranslate('https://news.ycombinator.com/')">🚀 Hacker News</button>
+      <button class="chip" onclick="setAndTranslate('https://dev.to/')">✍️ Dev.to 개발 블로그</button>
+      <button class="chip" onclick="setAndTranslate('https://feeds.bbci.co.uk/news/technology/rss.xml')">📰 BBC Tech RSS Feed</button>
     </div>
 
-    <!-- 2. 독서록 작성 -->
-    <div id="tab-logs" class="tab-content">
-      <div class="card">
-        <h2>독서록 작성하기</h2>
-        <form id="log-form">
-          <div class="form-group">
-            <label for="log-book-select">책 선택</label>
-            <select id="log-book-select" required>
-              <option value="">책을 선택하세요</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="log-content">독서록 내용</label>
-            <textarea id="log-content" required placeholder="오늘 읽은 내용과 느낀 점을 기록해 보세요."></textarea>
-          </div>
-          <button type="submit" class="btn">독서록 저장</button>
-        </form>
-      </div>
-
-      <div class="card">
-        <h2>작성한 독서록</h2>
-        <div id="logs-list" class="item-list"></div>
-      </div>
-    </div>
-
-    <!-- 3. URL 링크/본문 번역기 -->
-    <div id="tab-url-trans" class="tab-content">
-      <div class="card">
-        <h2>웹페이지(URL) 및 본문 번역</h2>
-        
-        <div class="form-group">
-          <label for="web-url-input">1️⃣ 웹페이지 주소 (URL)</label>
-          <div class="url-input-group">
-            <input type="url" id="web-url-input" placeholder="https://www.gutenberg.org/files/11/11-h/11-h.htm">
-            <button type="button" class="btn" onclick="translateUrl()">페이지 불러오기</button>
-          </div>
-        </div>
-
-        <div id="url-status" style="margin-top: 10px; font-weight: bold; color: var(--primary);"></div>
-        <div id="progress-bar" class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
-
-        <div id="fallback-paste-container" class="fallback-box" style="display: none;">
-          <h4 style="margin-bottom: 8px; color: #b78103;">💡 원문 텍스트 직접 붙여넣기 번역</h4>
-          <textarea id="fallback-text-input" placeholder="여기에 소설이나 영문 텍스트 전체를 붙여넣으세요..." style="height: 150px;"></textarea>
-          <button type="button" class="btn" style="background:#e67e22; margin-top:8px;" onclick="processPastedText()">텍스트 전체 번역 시작</button>
-        </div>
-
-        <div id="url-result-container" style="display: none; margin-top: 20px;">
-          <h3 style="margin-bottom: 10px;">번역 결과</h3>
-          <div id="url-paragraphs"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. AI 텍스트 번역기 -->
-    <div id="tab-translator" class="tab-content">
-      <div class="card">
-        <h2>단어 / 장문 번역</h2>
-        <div class="form-group">
-          <label for="trans-input">번역할 영문 단어 또는 길고 긴 문장</label>
-          <textarea id="trans-input" placeholder="아무리 긴 텍스트라도 글자 수 제한 없이 분할 번역됩니다."></textarea>
-        </div>
-        <button type="button" class="btn" onclick="translateText()">번역하기</button>
-
-        <div id="trans-result-box" class="translation-result" style="display:none;">
-          <p><strong>번역 결과:</strong></p>
-          <p id="trans-output" style="margin-top:5px; line-height:1.6; white-space: pre-wrap;"></p>
-
-          <div class="save-action-group">
-            <label for="trans-category-select" style="font-size: 0.85rem; font-weight: 600;">분류 카테고리:</label>
-            <select id="trans-category-select" class="category-select-dropdown"></select>
-            <button type="button" class="btn" style="background:#27ae60;" onclick="saveWord()">단어장에 저장하기</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 저장된 단어장 -->
-    <div id="tab-vocab" class="tab-content">
-      <div class="card">
-        <h2>저장된 단어 및 문장 관리</h2>
-        
-        <div class="vocab-controls">
-          <div>
-            <label for="vocab-filter-category" style="font-size: 0.9rem; font-weight: 600; margin-right: 5px;">카테고리 필터:</label>
-            <select id="vocab-filter-category" onchange="renderVocab()" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border);">
-              <option value="ALL">전체 보기</option>
-            </select>
-          </div>
-
-          <div class="category-add-box">
-            <input type="text" id="new-category-input" placeholder="새 카테고리 이름">
-            <button class="btn" style="font-size:0.8rem; padding: 6px 10px;" onclick="addNewCategory()">카테고리 추가</button>
-          </div>
-        </div>
-
-        <ul id="vocab-list" class="saved-words-list"></ul>
-      </div>
-    </div>
+    <div id="statusBox" class="status"></div>
   </div>
 
-  <script>
-    let books = JSON.parse(localStorage.getItem('books')) || [];
-    let logs = JSON.parse(localStorage.getItem('logs')) || [];
-    let vocab = JSON.parse(localStorage.getItem('vocab')) || [];
-    let categories = JSON.parse(localStorage.getItem('categories')) || ['일반', '소설', '뉴스', '비즈니스', 'IT/기술'];
+  <div class="result-container" id="resultContainer" style="display: none;">
+    <div class="result-box">
+      <h2>원문 (Original)</h2>
+      <div id="originalContent" class="content-area"></div>
+    </div>
+    <div class="result-box">
+      <h2>번역문 (Translated)</h2>
+      <div id="translatedContent" class="content-area"></div>
+    </div>
+  </div>
+</div>
 
-    let currentTranslation = { original: '', translated: '' };
+<script>
+  // 바로가기 버튼 클릭 시 입력창 반영 및 즉시 번역
+  function setAndTranslate(url) {
+    document.getElementById('targetUrl').value = url;
+    startTranslation();
+  }
 
-    // 타임아웃 호환성 함수
-    function getTimeoutSignal(ms) {
-      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-        return AbortSignal.timeout(ms);
-      }
-      return undefined;
+  function showStatus(message, type = 'loading') {
+    const statusBox = document.getElementById('statusBox');
+    statusBox.className = `status ${type}`;
+    statusBox.innerText = message;
+    statusBox.style.display = 'block';
+  }
+
+  function hideStatus() {
+    document.getElementById('statusBox').style.display = 'none';
+  }
+
+  async function startTranslation() {
+    const url = document.getElementById('targetUrl').value.trim();
+    const targetLang = document.getElementById('targetLang').value;
+
+    if (!url) {
+      alert('URL을 입력해 주세요.');
+      return;
     }
 
-    function initCategories() {
-      const dropdowns = document.querySelectorAll('.category-select-dropdown');
-      dropdowns.forEach(select => {
-        select.innerHTML = categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+    showStatus('1/3단계: CORS 우회 프록시를 이용해 페이지 원문을 불러오는 중...', 'loading');
+    document.getElementById('resultContainer').style.display = 'none';
+
+    try {
+      // 1. CORS 우회 프록시(AllOrigins) 적용
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) throw new Error('웹페이지 데이터를 불러오는 데 실패했습니다.');
+      
+      const data = await response.json();
+      if (!data.contents) throw new Error('페이지 내용을 읽어올 수 없습니다.');
+
+      showStatus('2/3단계: 주요 본문 단락(HTML)을 파싱하는 중...', 'loading');
+
+      // 2. DOMParser로 HTML 분석 및 주요 문단 텍스트 추출
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data.contents, 'text/html');
+
+      // 불필요한 스크립트, 스타일, 네비게이션 태그 제거
+      const removeSelectors = ['script', 'style', 'noscript', 'nav', 'footer', 'header', 'iframe', 'svg'];
+      removeSelectors.forEach(selector => {
+        doc.querySelectorAll(selector).forEach(el => el.remove());
       });
 
-      const filterSelect = document.getElementById('vocab-filter-category');
-      if (filterSelect) {
-        const currentVal = filterSelect.value || 'ALL';
-        filterSelect.innerHTML = '<option value="ALL">전체 보기</option>' + 
-          categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
-        filterSelect.value = currentVal;
-      }
-    }
+      // 주요 본문 요소 추출 (p, h1~h3, li 등)
+      let elements = doc.querySelectorAll('p, h1, h2, h3, li');
+      let textBlocks = [];
 
-    function addNewCategory() {
-      const input = document.getElementById('new-category-input');
-      const newCat = input.value.trim();
-      if (!newCat) return alert('카테고리 이름을 입력하세요.');
-      if (categories.includes(newCat)) return alert('이미 존재하는 카테고리입니다.');
-
-      categories.push(newCat);
-      localStorage.setItem('categories', JSON.stringify(categories));
-      input.value = '';
-      initCategories();
-    }
-
-    function switchTab(evt, tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById(tabId).classList.add('active');
-      if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
-
-      if (tabId === 'tab-logs') populateBookSelect();
-      if (tabId === 'tab-vocab') renderVocab();
-      initCategories();
-    }
-
-    document.getElementById('book-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const title = document.getElementById('book-title').value;
-      const author = document.getElementById('book-author').value;
-
-      books.push({ id: Date.now(), title, author });
-      localStorage.setItem('books', JSON.stringify(books));
-      
-      document.getElementById('book-title').value = '';
-      document.getElementById('book-author').value = '';
-      renderBooks();
-    });
-
-    function renderBooks() {
-      const list = document.getElementById('books-list');
-      if (books.length === 0) {
-        list.innerHTML = '<p>등록된 책이 없습니다.</p>';
-        return;
-      }
-      list.innerHTML = books.map(book => `
-        <div class="item-card">
-          <h3>${escapeHtml(book.title)}</h3>
-          <p>저자: ${escapeHtml(book.author)}</p>
-        </div>
-      `).join('');
-    }
-
-    function populateBookSelect() {
-      const select = document.getElementById('log-book-select');
-      select.innerHTML = '<option value="">책을 선택하세요</option>' + 
-        books.map(b => `<option value="${escapeHtml(b.title)}">${escapeHtml(b.title)}</option>`).join('');
-    }
-
-    document.getElementById('log-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const bookTitle = document.getElementById('log-book-select').value;
-      const content = document.getElementById('log-content').value;
-
-      logs.push({ id: Date.now(), bookTitle, content, date: new Date().toLocaleDateString('ko-KR') });
-      localStorage.setItem('logs', JSON.stringify(logs));
-      document.getElementById('log-content').value = '';
-      renderLogs();
-    });
-
-    function renderLogs() {
-      const list = document.getElementById('logs-list');
-      if (logs.length === 0) {
-        list.innerHTML = '<p>작성된 독서록이 없습니다.</p>';
-        return;
-      }
-      list.innerHTML = logs.map(log => `
-        <div class="item-card">
-          <h3>[${escapeHtml(log.bookTitle)}]</h3>
-          <p>${escapeHtml(log.content)}</p>
-          <div class="date">${log.date}</div>
-        </div>
-      `).join('');
-    }
-
-    // --- 고성능 번역 및 안정적 청크 파싱 엔진 ---
-
-    function splitIntoSafeChunks(text, maxLen = 1000) {
-      if (!text) return [];
-      
-      const rawTokens = text.match(/[^.!?\n]+[.!?\n]*|\n+/g) || [text];
-      const chunks = [];
-      let current = "";
-
-      for (let token of rawTokens) {
-        if (token.length > maxLen) {
-          if (current.trim()) { chunks.push(current.trim()); current = ""; }
-          let words = token.split(" ");
-          for (let w of words) {
-            if (w.length > maxLen) {
-              if (current.trim()) { chunks.push(current.trim()); current = ""; }
-              for (let i = 0; i < w.length; i += maxLen) {
-                chunks.push(w.slice(i, i + maxLen));
-              }
-            } else if ((current + " " + w).length > maxLen) {
-              if (current.trim()) chunks.push(current.trim());
-              current = w;
-            } else {
-              current = current ? current + " " + w : w;
-            }
-          }
-        } else if ((current + token).length > maxLen) {
-          if (current.trim()) chunks.push(current.trim());
-          current = token;
-        } else {
-          current += token;
-        }
-      }
-      if (current.trim()) chunks.push(current.trim());
-      return chunks;
-    }
-
-    async function translateChunk(chunkText) {
-      if (!chunkText.trim()) return '';
-
-      const targetApi = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(chunkText)}`;
-      const proxyEndpoints = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetApi)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetApi)}`
-      ];
-
-      for (let endpoint of proxyEndpoints) {
-        try {
-          const signal = getTimeoutSignal(3500);
-          const res = await fetch(endpoint, signal ? { signal } : {});
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data) && Array.isArray(data[0])) {
-              const result = data[0]
-                .filter(item => Array.isArray(item) && item[0])
-                .map(item => item[0])
-                .join('');
-              if (result.trim()) return result;
-            }
-          }
-        } catch (e) {}
-      }
-
-      // Fallback: MyMemory API
-      try {
-        const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunkText.slice(0, 500))}&langpair=en|ko`;
-        const signal = getTimeoutSignal(3500);
-        const res = await fetch(mmUrl, signal ? { signal } : {});
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.responseData && data.responseData.translatedText) {
-            return data.responseData.translatedText;
-          }
-        }
-      } catch (e) {}
-
-      return chunkText;
-    }
-
-    async function fetchTranslation(text, progressCallback) {
-      if (!text || !text.trim()) return '';
-      const chunks = splitIntoSafeChunks(text, 1000);
-      let results = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const translated = await translateChunk(chunks[i]);
-        results.push(translated);
-        if (progressCallback) progressCallback((i + 1) / chunks.length);
-        await new Promise(r => setTimeout(r, 100));
-      }
-
-      return results.join(' ');
-    }
-
-    async function fetchHtmlWithProxies(targetUrl) {
-      const proxyList = [
-        `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-      ];
-
-      for (let url of proxyList) {
-        try {
-          const signal = getTimeoutSignal(5000);
-          const res = await fetch(url, signal ? { signal } : {});
-          if (!res.ok) continue;
-
-          if (url.includes('allorigins')) {
-            const data = await res.json();
-            if (data && data.contents) return data.contents;
-          } else {
-            const htmlText = await res.text();
-            if (htmlText && htmlText.length > 100) return htmlText;
-          }
-        } catch (e) {}
-      }
-      throw new Error('접속 제한');
-    }
-
-    async function translateUrl() {
-      const url = document.getElementById('web-url-input').value.trim();
-      const statusEl = document.getElementById('url-status');
-      const containerEl = document.getElementById('url-result-container');
-      const paragraphsEl = document.getElementById('url-paragraphs');
-      const fallbackContainer = document.getElementById('fallback-paste-container');
-      const progressBar = document.getElementById('progress-bar');
-
-      if (!url) return alert('URL을 입력해주세요.');
-
-      statusEl.innerText = '웹페이지 불러오는 중...';
-      containerEl.style.display = 'none';
-      fallbackContainer.style.display = 'none';
-      progressBar.style.display = 'none';
-      paragraphsEl.innerHTML = '';
-
-      try {
-        const htmlContent = await fetchHtmlWithProxies(url);
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, 'text/html');
-
-        doc.querySelectorAll('script, style, noscript, header, footer, nav, iframe').forEach(el => el.remove());
-        
-        let texts = [];
-
-        const rawElements = doc.querySelectorAll('p, pre, article p, section p, .article-body p');
-        rawElements.forEach(el => {
-          const rawTxt = el.innerText ? el.innerText.trim() : '';
-          if (rawTxt.length > 20) {
-            const cleaned = rawTxt.replace(/\s+/g, ' ').trim();
-            if (cleaned.length > 20 && !cleaned.includes('Project Gutenberg') && !texts.includes(cleaned)) {
-              texts.push(cleaned);
-            }
+      // Raw 파일 형태이거나 태그 구조가 간단한 경우
+      if (elements.length < 3) {
+        const rawText = doc.body ? doc.body.innerText : data.contents;
+        textBlocks = rawText.split('\n').filter(line => line.trim().length > 15).slice(0, 25);
+      } else {
+        elements.forEach(el => {
+          const text = el.innerText.trim();
+          // 너무 짧은 메뉴 아이콘이나 단어 제외 (20자 이상)
+          if (text.length > 20) {
+            textBlocks.push(text);
           }
         });
-
-        if (texts.length === 0) {
-          const bodyText = doc.body ? doc.body.innerText : '';
-          const blocks = bodyText.split(/\n\s*\n/);
-          blocks.forEach(b => {
-            const cleaned = b.replace(/\s+/g, ' ').trim();
-            if (cleaned.length > 30 && !texts.includes(cleaned)) {
-              texts.push(cleaned);
-            }
-          });
-        }
-
-        if (texts.length === 0) {
-          statusEl.innerText = '본문 추출 실패. 아래에 직접 붙여넣어 주세요.';
-          fallbackContainer.style.display = 'block';
-          return;
-        }
-
-        await renderParagraphTranslations(texts);
-      } catch (err) {
-        statusEl.innerText = '❌ 웹사이트 접속 제한 발생. 원문을 아래 직접 붙여넣어 주세요.';
-        fallbackContainer.style.display = 'block';
-      }
-    }
-
-    function processPastedText() {
-      const rawText = document.getElementById('fallback-text-input').value.trim();
-      if(!rawText) return alert('원문을 입력해 주세요.');
-
-      const paragraphs = rawText.split(/\n\s*\n/).map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 15);
-      if(paragraphs.length === 0) return alert('텍스트가 너무 짧습니다.');
-
-      renderParagraphTranslations(paragraphs);
-    }
-
-    async function renderParagraphTranslations(texts) {
-      const statusEl = document.getElementById('url-status');
-      const containerEl = document.getElementById('url-result-container');
-      const paragraphsEl = document.getElementById('url-paragraphs');
-      const progressBar = document.getElementById('progress-bar');
-      const progressFill = document.getElementById('progress-fill');
-
-      containerEl.style.display = 'block';
-      progressBar.style.display = 'block';
-      paragraphsEl.innerHTML = '';
-
-      for (let i = 0; i < texts.length; i++) {
-        const origText = texts[i];
-        statusEl.innerText = `전체 ${texts.length}개 문단 중 ${i + 1}번째 문단 번역 중...`;
-        progressFill.style.width = `${((i + 1) / texts.length) * 100}%`;
-
-        const transText = await fetchTranslation(origText);
-
-        const box = document.createElement('div');
-        box.className = 'paragraph-box';
-
-        const origDiv = document.createElement('div');
-        origDiv.className = 'orig';
-        origDiv.innerHTML = '<strong>원문:</strong> ';
-        origDiv.appendChild(document.createTextNode(origText));
-
-        const transDiv = document.createElement('div');
-        transDiv.className = 'trans';
-        transDiv.innerHTML = '<strong>번역:</strong> ';
-        transDiv.appendChild(document.createTextNode(transText));
-
-        const actionGroup = document.createElement('div');
-        actionGroup.className = 'save-action-group';
-
-        const label = document.createElement('label');
-        label.style.fontSize = '0.8rem';
-        label.style.fontWeight = '600';
-        label.innerText = '분류: ';
-
-        const select = document.createElement('select');
-        select.style.padding = '4px 8px';
-        select.style.fontSize = '0.85rem';
-        select.innerHTML = categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
-
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'btn';
-        saveBtn.style.cssText = 'font-size: 0.8rem; padding: 5px 10px; background: #27ae60;';
-        saveBtn.innerText = '단어장 저장';
-        saveBtn.addEventListener('click', () => {
-          saveDirectWord(origText, transText, select.value);
-        });
-
-        actionGroup.appendChild(label);
-        actionGroup.appendChild(select);
-        actionGroup.appendChild(saveBtn);
-
-        box.appendChild(origDiv);
-        box.appendChild(transDiv);
-        box.appendChild(actionGroup);
-
-        paragraphsEl.appendChild(box);
+        textBlocks = textBlocks.slice(0, 20); // 안정적 번역을 위한 상위 20개 단락 제한
       }
 
-      statusEl.innerText = `✅ 전체 ${texts.length}개 문단 번역 완료!`;
-    }
-
-    async function translateText() {
-      const text = document.getElementById('trans-input').value.trim();
-      if (!text) return alert('번역할 내용을 입력해주세요.');
-
-      const outputEl = document.getElementById('trans-output');
-      const resultBox = document.getElementById('trans-result-box');
-      outputEl.innerText = '실시간 번역 진행 중...';
-      resultBox.style.display = 'block';
-
-      const translatedText = await fetchTranslation(text);
-      outputEl.innerText = translatedText;
-      currentTranslation = { original: text, translated: translatedText };
-    }
-
-    function saveWord() {
-      if (!currentTranslation.original) return;
-      const category = document.getElementById('trans-category-select').value || '일반';
-      saveDirectWord(currentTranslation.original, currentTranslation.translated, category);
-    }
-
-    function saveDirectWord(original, translated, category = '일반') {
-      vocab.push({ id: Date.now(), original, translated, category });
-      localStorage.setItem('vocab', JSON.stringify(vocab));
-      alert(`[${category}] 카테고리에 저장되었습니다!`);
-    }
-
-    function renderVocab() {
-      const list = document.getElementById('vocab-list');
-      const filterSelect = document.getElementById('vocab-filter-category');
-      const filterCategory = filterSelect ? filterSelect.value : 'ALL';
-
-      let filteredVocab = vocab;
-      if (filterCategory !== 'ALL') {
-        filteredVocab = vocab.filter(item => (item.category || '일반') === filterCategory);
+      if (textBlocks.length === 0) {
+        throw new Error('본문 텍스트 요소를 찾지 못했습니다.');
       }
 
-      if (filteredVocab.length === 0) {
-        list.innerHTML = '<li style="color:#777;">저장된 항목이 없습니다.</li>';
-        return;
+      showStatus(`3/3단계: 추출된 ${textBlocks.length}개 문단을 구글 번역 API로 번역 중...`, 'loading');
+
+      // 3. 번역 수행 및 화면에 출력
+      const originalContainer = document.getElementById('originalContent');
+      const translatedContainer = document.getElementById('translatedContent');
+      originalContainer.innerHTML = '';
+      translatedContainer.innerHTML = '';
+
+      for (let text of textBlocks) {
+        const transText = await translateText(text, targetLang);
+
+        const origP = document.createElement('p');
+        origP.textContent = text;
+        originalContainer.appendChild(origP);
+
+        const transP = document.createElement('p');
+        transP.textContent = transText;
+        translatedContainer.appendChild(transP);
       }
 
-      list.innerHTML = filteredVocab.map(item => `
-        <li>
-          <div>
-            <span class="badge">${escapeHtml(item.category || '일반')}</span><br>
-            <strong>${escapeHtml(item.original)}</strong><br>
-            <span style="color:#555; font-size:0.95rem;">${escapeHtml(item.translated)}</span>
-          </div>
-          <button class="delete-btn" onclick="deleteVocab(${item.id})">삭제</button>
-        </li>
-      `).join('');
-    }
+      hideStatus();
+      document.getElementById('resultContainer').style.display = 'grid';
 
-    function deleteVocab(id) {
-      vocab = vocab.filter(item => item.id !== id);
-      localStorage.setItem('vocab', JSON.stringify(vocab));
-      renderVocab();
+    } catch (err) {
+      showStatus(`오류: ${err.message} (보안 방어가 지나치게 강한 사이트는 접속이 제한될 수 있습니다.)`, 'error');
     }
+  }
 
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  // 구글 번역 무료 오픈 API 호출 함수
+  async function translateText(text, targetLang) {
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      if (data && data[0]) {
+        return data[0].map(item => item[0]).join('');
+      }
+      return text;
+    } catch (e) {
+      return text + ' (번역 실패)';
     }
+  }
+</script>
 
-    initCategories();
-    renderBooks();
-    renderLogs();
-  </script>
 </body>
 </html>
